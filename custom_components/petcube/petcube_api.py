@@ -61,6 +61,22 @@ class PetcubeAPI:
                 continue
         return []
 
+    def get_device(self, device_id):
+        url = f"{BASE_URL}/api/v1/petcubes/{device_id}"
+        req = urllib.request.Request(url, headers=self._headers())
+        try:
+            with urllib.request.urlopen(req, timeout=10) as r:
+                resp = json.loads(r.read())
+                return resp.get("data", resp)
+        except urllib.error.HTTPError as e:
+            if e.code == 401:
+                self.login()
+                req = urllib.request.Request(url, headers=self._headers())
+                with urllib.request.urlopen(req, timeout=10) as r:
+                    resp = json.loads(r.read())
+                    return resp.get("data", resp)
+            raise
+
     def launch_treat(self, device_id, strength=1):
         if not self.token:
             self.login()
