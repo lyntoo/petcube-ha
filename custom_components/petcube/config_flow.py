@@ -1,6 +1,5 @@
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.core import callback
 from .const import DOMAIN, CONF_EMAIL, CONF_PASSWORD, CONF_DEVICE_ID, CONF_DEVICE_NAME
 from .petcube_api import PetcubeAPI
 
@@ -68,6 +67,36 @@ class PetcubeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="device",
             data_schema=vol.Schema({
                 vol.Required(CONF_DEVICE_ID): vol.In(device_options),
+            }),
+            errors=errors,
+        )
+
+    async def async_step_reconfigure(self, user_input=None):
+        entry = self._get_reconfigure_entry()
+        errors = {}
+
+        if user_input is not None:
+            api = PetcubeAPI(user_input[CONF_EMAIL], user_input[CONF_PASSWORD])
+            try:
+                ok = await self.hass.async_add_executor_job(api.login)
+                if ok:
+                    return self.async_update_reload_and_abort(
+                        entry,
+                        data={
+                            **entry.data,
+                            CONF_EMAIL: user_input[CONF_EMAIL],
+                            CONF_PASSWORD: user_input[CONF_PASSWORD],
+                        },
+                    )
+                errors["base"] = "invalid_auth"
+            except Exception:
+                errors["base"] = "cannot_connect"
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=vol.Schema({
+                vol.Required(CONF_EMAIL, default=entry.data.get(CONF_EMAIL, "")): str,
+                vol.Required(CONF_PASSWORD): str,
             }),
             errors=errors,
         )
