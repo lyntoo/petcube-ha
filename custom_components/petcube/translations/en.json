@@ -1,0 +1,29 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Petcube — Sign In",
+        "description": "Enter your Petcube account credentials",
+        "data": {
+          "email": "Email",
+          "password": "Password"
+        }
+      },
+      "device": {
+        "title": "Select Device",
+        "description": "Choose your Petcube device",
+        "data": {
+          "device_id": "Device"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid email or password",
+      "cannot_connect": "Cannot reach the Petcube API",
+      "no_devices": "No devices found on this account"
+    },
+    "abort": {
+      "already_configured": "This device is already configured"
+    }
+  }
+}

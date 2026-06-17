@@ -1,0 +1,10 @@
+DOMAIN = "petcube"
+BASE_URL = "https://api.petcube.com"
+CONF_EMAIL = "email"
+CONF_PASSWORD = "password"
+CONF_DEVICE_ID = "device_id"
+CONF_DEVICE_NAME = "device_name"
+CONF_TOKEN = "token"
+CONF_USER_ID = "user_id"
+CONF_STRENGTH = "strength"
+DEFAULT_STRENGTH = 1
