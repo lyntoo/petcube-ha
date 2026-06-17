@@ -9,6 +9,14 @@
           "password": "Password"
         }
       },
+      "reconfigure": {
+        "title": "Reconfigure Petcube",
+        "description": "Update your Petcube account credentials",
+        "data": {
+          "email": "Email",
+          "password": "New password"
+        }
+      },
       "device": {
         "title": "Select Device",
         "description": "Choose your Petcube device",

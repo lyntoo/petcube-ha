@@ -9,6 +9,14 @@
           "password": "Mot de passe"
         }
       },
+      "reconfigure": {
+        "title": "Reconfigurer Petcube",
+        "description": "Mettre à jour les identifiants du compte Petcube",
+        "data": {
+          "email": "Email",
+          "password": "Nouveau mot de passe"
+        }
+      },
       "device": {
         "title": "Choisir un appareil",
         "description": "Sélectionnez votre Petcube",
