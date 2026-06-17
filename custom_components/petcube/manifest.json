@@ -1,0 +1,12 @@
+{
+  "domain": "petcube",
+  "name": "Petcube",
+  "version": "1.0.0",
+  "documentation": "https://github.com/lyntoo/petcube-ha",
+  "issue_tracker": "https://github.com/lyntoo/petcube-ha/issues",
+  "dependencies": [],
+  "codeowners": ["@lyntoo"],
+  "requirements": [],
+  "config_flow": true,
+  "iot_class": "cloud_polling"
+}

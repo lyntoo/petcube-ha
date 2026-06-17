@@ -1,0 +1,29 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Petcube — Connexion",
+        "description": "Entrez vos identifiants Petcube",
+        "data": {
+          "email": "Email",
+          "password": "Mot de passe"
+        }
+      },
+      "device": {
+        "title": "Choisir un appareil",
+        "description": "Sélectionnez votre Petcube",
+        "data": {
+          "device_id": "Appareil"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Email ou mot de passe incorrect",
+      "cannot_connect": "Impossible de joindre l'API Petcube",
+      "no_devices": "Aucun appareil trouvé sur ce compte"
+    },
+    "abort": {
+      "already_configured": "Cet appareil est déjà configuré"
+    }
+  }
+}
