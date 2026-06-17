@@ -92,7 +92,62 @@ def print_devices(devices: list) -> None:
     print(f"{'─'*60}\n")
 
 
+def print_device_raw(session: requests.Session, device_id: int) -> None:
+    """Dump all fields for a device — useful to find serial, prod_rev, etc."""
+    import json
+    resp = session.get(f"{API_BASE}api/v1/petcubes/{device_id}")
+    try:
+        d = _data(resp)
+    except Exception:
+        d = resp.json()
+    # Redact any token-like fields just in case
+    redact = {"token", "access_token", "refresh_token", "password", "secret"}
+    def _safe(obj, depth=0):
+        if isinstance(obj, dict):
+            return {k: ("***" if k.lower() in redact else _safe(v, depth+1))
+                    for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [_safe(i, depth+1) for i in obj]
+        return obj
+    print(json.dumps(_safe(d), indent=2))
+
+
 # ── Cloud actions ─────────────────────────────────────────────────────────────
+
+def check_firmware_update(session: requests.Session, device_id: int, fake_ver: str = "") -> dict:
+    """GET api/v1/pet-tracker/available-update/{id} → firmware downloadLink if available."""
+    url = f"{API_BASE}api/v1/pet-tracker/available-update/{device_id}"
+    if fake_ver:
+        url += f"?softVer={fake_ver}"
+    resp = session.get(url)
+    try:
+        return _data(resp)
+    except Exception:
+        return resp.json() if resp.content else {}
+
+
+def get_firmware_direct(session: requests.Session, device_id: int) -> dict:
+    """Try alternate firmware endpoints."""
+    results = {}
+    for path in [
+        f"api/v1/petcubes/{device_id}/firmware",
+        f"api/v1/petcubes/{device_id}/settings",
+        f"api/v1/pet-tracker/mstr/devices/{device_id}",
+    ]:
+        resp = session.get(f"{API_BASE}{path}")
+        if resp.status_code == 200:
+            results[path] = resp.json()
+    return results
+
+
+def get_release_notes(session: requests.Session, soft_ver: str) -> dict:
+    """GET api/v1/release-notes/{softVer} → release notes for a firmware version."""
+    resp = session.get(f"{API_BASE}api/v1/release-notes/{soft_ver}")
+    try:
+        return _data(resp)
+    except Exception:
+        return resp.json() if resp.content else {}
+
 
 def dispense_treat(session: requests.Session, device_id: int, strength: int = 1) -> None:
     """POST api/v1/deviceActivity/treats/launch/{id} with strength payload."""
@@ -232,7 +287,7 @@ def main() -> None:
 
     # 5. Menu
     while True:
-        print("\n[1] Dispense treat (cloud)  [2] Local TLS probe  [q] Quit")
+        print("\n[1] Dispense treat (cloud)  [2] Local TLS probe  [3] Raw device info  [4] Firmware update check  [5] Release notes  [q] Quit")
         choice = input("> ").strip().lower()
 
         if choice == "1":
@@ -240,6 +295,39 @@ def main() -> None:
 
         elif choice == "2":
             probe_local(legacy_token, user_id)
+
+        elif choice == "3":
+            print_device_raw(session, target["id"])
+
+        elif choice == "4":
+            # Try versions just below current (0.7.82.4007) to get download URL
+            versions = [
+                "0.7.82.4006", "0.7.82.4000", "0.7.82.0",
+                "0.7.81.0", "0.7.80.0", "0.7.75.0",
+                "0.7.70.0", "0.7.60.0", "0.7.50.0",
+                "0.6.99.0", "0.6.0.0", "0.5.99.0",
+            ]
+            for ver in versions:
+                fw = check_firmware_update(session, target["id"], fake_ver=ver)
+                if fw and "errors" not in fw:
+                    print(f"\n[fw] *** HIT with ver={ver} ***")
+                    print(json.dumps(fw, indent=2))
+                    break
+                else:
+                    err = fw.get("errors", fw) if fw else "empty"
+                    print(f"[fw] {ver}: {err}")
+
+            # Also try alternate endpoints
+            print("\n[fw] Trying alternate endpoints...")
+            alt = get_firmware_direct(session, target["id"])
+            for path, data in alt.items():
+                print(f"\n  {path}:")
+                print(json.dumps(data, indent=2)[:500])
+
+        elif choice == "5":
+            soft_ver = target.get("soft_ver", "0.7.82.4007")
+            notes = get_release_notes(session, soft_ver)
+            print(json.dumps(notes, indent=2))
 
         elif choice == "q":
             break

@@ -77,7 +77,7 @@ class PetcubeAPI:
                     return resp.get("data", resp)
             raise
 
-    def launch_treat(self, device_id, strength=1):
+    def launch_treat(self, device_id, strength=66.0):
         if not self.token:
             self.login()
         url = f"{BASE_URL}/api/v1/deviceActivity/treats/launch/{device_id}"
