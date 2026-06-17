@@ -23,8 +23,12 @@ A Home Assistant custom integration for **Petcube Bites** treat dispensers, reve
 ## Features
 
 - **Treat button** — Dispense a treat with one tap or via automation
-- **Strength selector** — Choose launch strength at any time: Weak / Medium / Strong
+- **Strength selector** — Choose launch strength: Faible / Moyen / Fort (1–3)
 - **Camera entity** — Shows the latest recorded snapshot *(Petcube Care subscription required)*
+- **Connectivity sensor** — Binary sensor reporting whether the device is online
+- **Firmware sensor** — Current firmware version with device metadata as attributes
+- **Device grouping** — All entities appear under a single device card in HA
+- **Auto-polling** — Device status refreshed every 60 seconds via `DataUpdateCoordinator`
 
 ---
 
@@ -58,7 +62,7 @@ A Home Assistant custom integration for **Petcube Bites** treat dispensers, reve
 2. Search for **Petcube**
 3. Enter your Petcube account email and password
 4. Select your device from the list
-5. Done — entities will appear automatically
+5. Done — entities will appear automatically under a single device card
 
 ---
 
@@ -66,9 +70,11 @@ A Home Assistant custom integration for **Petcube Bites** treat dispensers, reve
 
 | Entity | Type | Description |
 |--------|------|-------------|
+| `binary_sensor.petcube_xxx_online` | Binary sensor | Device connectivity (online / offline) |
 | `button.petcube_xxx_treat` | Button | Dispense a treat |
-| `select.petcube_xxx_strength` | Select | Launch strength (Weak / Medium / Strong) |
+| `select.petcube_xxx_strength` | Select | Launch strength (Faible / Moyen / Fort) |
 | `camera.petcube_xxx_camera` | Camera | Latest snapshot (Care required) |
+| `sensor.petcube_xxx_firmware` | Sensor | Firmware version + device metadata |
 
 ---
 
@@ -84,7 +90,7 @@ action:
     target:
       entity_id: select.petcube_bites_strength
     data:
-      option: Strong
+      option: Fort
   - service: button.press
     target:
       entity_id: button.petcube_bites_treat
@@ -96,7 +102,11 @@ action:
 
 This integration uses the **Petcube REST API** (`api.petcube.com`) with legacy token authentication, discovered by decompiling the official Android APK with [jadx](https://github.com/skylot/jadx).
 
-Key endpoint: `POST api/v1/deviceActivity/treats/launch/{device_id}` with `{"strength": 1|2|3}`.
+Key endpoints:
+- `POST api/v1/login` → authentication
+- `GET api/v1/users/{id}/petcubes` → device listing
+- `POST api/v1/deviceActivity/treats/launch/{id}` → treat dispense
+- `GET api/v1/petcubes/{id}` → device status (polled every 60s)
 
 ---
 
