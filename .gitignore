@@ -1,0 +1,9 @@
+# TLS certificates and private key extracted from APK — not part of the HA integration
+*.pem
+*.key
+ca.crt
+cli_ndk.crt
+
+# Python
+__pycache__/
+*.pyc

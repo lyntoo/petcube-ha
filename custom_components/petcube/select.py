@@ -1,7 +1,10 @@
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
 from .const import DOMAIN, CONF_DEVICE_ID, CONF_DEVICE_NAME
 
 STRENGTH_OPTIONS = ["Faible", "Moyen", "Fort"]
@@ -9,11 +12,13 @@ STRENGTH_MAP = {"Faible": 1, "Moyen": 2, "Fort": 3}
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback):
-    async_add_entities([PetcubeStrengthSelect(hass, entry)])
+    entry_data = hass.data[DOMAIN][entry.entry_id]
+    async_add_entities([PetcubeStrengthSelect(entry_data["coordinator"], hass, entry)])
 
 
-class PetcubeStrengthSelect(SelectEntity):
-    def __init__(self, hass, entry: ConfigEntry):
+class PetcubeStrengthSelect(CoordinatorEntity, SelectEntity):
+    def __init__(self, coordinator, hass, entry: ConfigEntry):
+        super().__init__(coordinator)
         self.hass = hass
         self._entry_id = entry.entry_id
         self._device_id = entry.data[CONF_DEVICE_ID]
@@ -23,6 +28,17 @@ class PetcubeStrengthSelect(SelectEntity):
         self._attr_icon = "mdi:speedometer"
         self._attr_options = STRENGTH_OPTIONS
         self._attr_current_option = "Moyen"
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        data = self.coordinator.data or {}
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._device_id)},
+            name=data.get("name", "Petcube"),
+            manufacturer="Petcube",
+            model=data.get("device_type"),
+            sw_version=data.get("soft_ver"),
+        )
 
     async def async_select_option(self, option: str) -> None:
         self._attr_current_option = option

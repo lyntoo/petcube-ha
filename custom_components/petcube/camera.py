@@ -5,7 +5,9 @@ from datetime import timedelta
 from homeassistant.components.camera import Camera
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
 from .const import DOMAIN, CONF_DEVICE_NAME
 
 _LOGGER = logging.getLogger(__name__)
@@ -13,20 +15,32 @@ SCAN_INTERVAL = timedelta(seconds=30)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback):
-    api = hass.data[DOMAIN][entry.entry_id]["api"]
-    async_add_entities([PetcubeCamera(api, entry)])
+    entry_data = hass.data[DOMAIN][entry.entry_id]
+    async_add_entities([PetcubeCamera(entry_data["api"], entry_data["coordinator"], entry)])
 
 
 class PetcubeCamera(Camera):
-    def __init__(self, api, entry: ConfigEntry):
+    def __init__(self, api, coordinator, entry: ConfigEntry):
         super().__init__()
         self._api = api
+        self._coordinator = coordinator
         self._device_id = str(entry.data["device_id"])
         device_name = entry.data.get(CONF_DEVICE_NAME, "Petcube")
         self._attr_name = f"{device_name} Caméra"
         self._attr_unique_id = f"petcube_{self._device_id}_camera"
         self._attr_icon = "mdi:cctv"
         self._image = None
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        data = self._coordinator.data or {}
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._device_id)},
+            name=data.get("name", "Petcube"),
+            manufacturer="Petcube",
+            model=data.get("device_type"),
+            sw_version=data.get("soft_ver"),
+        )
 
     async def async_camera_image(self, width=None, height=None):
         return await self.hass.async_add_executor_job(self._fetch_snapshot)
@@ -52,12 +66,10 @@ class PetcubeCamera(Camera):
         return self._image
 
     def _extract_image(self, resp):
-        # resp may be a list or {"data": [...]}
         items = resp if isinstance(resp, list) else resp.get("data", [])
         if not items:
             return None
 
-        # find thumbnail for our device first, then fallback to any
         for match_device in (True, False):
             for item in items:
                 if not isinstance(item, dict):
@@ -65,13 +77,11 @@ class PetcubeCamera(Camera):
                 cube_id = str(item.get("cubeId", item.get("cube_id", "")))
                 if match_device and cube_id != self._device_id:
                     continue
-                # item is a CubeCareThumbnails: {"cubeId": ..., "thumbnails": [...]}
                 thumbs = item.get("thumbnails", [])
                 if thumbs and isinstance(thumbs[0], dict):
                     snapshot_url = thumbs[0].get("url")
                     if snapshot_url:
                         return self._download_image(snapshot_url)
-                # fallback: maybe flat structure {"url": "..."}
                 snapshot_url = item.get("url")
                 if snapshot_url:
                     return self._download_image(snapshot_url)
@@ -79,10 +89,10 @@ class PetcubeCamera(Camera):
         return None
 
     _IMAGE_MAGIC = (
-        b"\xff\xd8",          # JPEG
-        b"\x89PNG",           # PNG
-        b"RIFF",              # WebP
-        b"GIF8",              # GIF
+        b"\xff\xd8",
+        b"\x89PNG",
+        b"RIFF",
+        b"GIF8",
     )
 
     def _download_image(self, url):
