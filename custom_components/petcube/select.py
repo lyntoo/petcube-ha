@@ -8,7 +8,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, CONF_DEVICE_ID, CONF_DEVICE_NAME
 
 STRENGTH_OPTIONS = ["Faible", "Moyen", "Fort"]
-STRENGTH_MAP = {"Faible": 1, "Moyen": 2, "Fort": 3}
+STRENGTH_MAP = {"Faible": 33.0, "Moyen": 66.0, "Fort": 99.0}
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback):
