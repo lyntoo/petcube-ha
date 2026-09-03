@@ -8,6 +8,10 @@ A Home Assistant custom integration for **Petcube Bites** treat dispensers, reve
 
 ---
 
+> **⚠️ Risky / experimental project.** This integration is built on a reverse-engineered, unofficial API — expect breakage without notice, and treat any hands-on experimentation with the device itself (firmware, storage, physical access) as high-risk. **Backing up or physically preserving the device's microSD card before experimenting is strongly recommended** — a bad write can corrupt it beyond recovery with no official way back.
+
+---
+
 ## Supported Devices
 
 | Device | Treats | Strength | Camera |
